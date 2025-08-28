@@ -9,10 +9,10 @@ class DynamicalSystemVisualizer {
         this.parameters = {};
         
         // View parameters
-        this.xMin = -3;
-        this.xMax = 3;
-        this.yMin = -3;
-        this.yMax = 3;
+        this.xMin = -5;
+        this.xMax = 5;
+        this.yMin = -5;
+        this.yMax = 5;
         
         // Visualization parameters
         this.gridDensity = 20;
