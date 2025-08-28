@@ -102,6 +102,31 @@ header p {
     border-color: #667eea;
 }
 
+.equation-group textarea {
+    width: calc(100% - 70px);
+    padding: 8px 12px;
+    border: 2px solid #e9ecef;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: 'Courier New', monospace;
+    resize: vertical;
+    min-height: 60px;
+    transition: border-color 0.3s ease;
+}
+
+.equation-group textarea:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.help-text {
+    display: block;
+    margin-top: 5px;
+    font-size: 12px;
+    color: #6c757d;
+    font-style: italic;
+}
+
 .setting-group {
     margin-bottom: 15px;
     display: flex;

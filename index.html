@@ -27,6 +27,13 @@
                         <label for="dy-dt">dy/dt =</label>
                         <input type="text" id="dy-dt" placeholder="e.g., x + y*(1 - x^2 - y^2)" value="x + y*(1 - x^2 - y^2)">
                     </div>
+                    
+                    <div class="equation-group">
+                        <label for="parameters">Parameters (JSON):</label>
+                        <textarea id="parameters" placeholder='{"mu": 1, "alpha": 0.5}' rows="3">{}</textarea>
+                        <small class="help-text">Define custom parameters as JSON object</small>
+                    </div>
+                    
                     <button id="update-system">Update System</button>
                 </div>
 
@@ -98,6 +105,7 @@
                 <canvas id="flow-field-canvas" width="800" height="800"></canvas>
                 <div class="canvas-info">
                     <span id="mouse-coordinates">Move mouse over canvas to see coordinates</span>
+                    <div id="current-parameters" style="margin-top: 10px; font-size: 12px; color: #666;"></div>
                 </div>
             </div>
         </div>

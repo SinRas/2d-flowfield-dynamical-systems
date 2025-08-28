@@ -6,6 +6,7 @@ class DynamicalSystemVisualizer {
         // System equations
         this.dxdt = null;
         this.dydt = null;
+        this.parameters = {};
         
         // View parameters
         this.xMin = -3;
@@ -88,6 +89,11 @@ class DynamicalSystemVisualizer {
             this.loadPreset(e.target.value);
         });
         
+        // Parameter validation on input
+        document.getElementById('parameters').addEventListener('input', (e) => {
+            this.validateParameters(e.target.value);
+        });
+        
         // Mouse coordinates
         this.canvas.addEventListener('mousemove', (e) => {
             const rect = this.canvas.getBoundingClientRect();
@@ -104,6 +110,7 @@ class DynamicalSystemVisualizer {
     updateSystem() {
         const dxdtInput = document.getElementById('dx-dt').value;
         const dydtInput = document.getElementById('dy-dt').value;
+        const parametersInput = document.getElementById('parameters').value;
         
         // Check if math.js is loaded
         if (typeof math === 'undefined') {
@@ -113,13 +120,24 @@ class DynamicalSystemVisualizer {
         }
         
         try {
+            // Parse parameters JSON
+            this.parameters = parametersInput.trim() ? JSON.parse(parametersInput) : {};
+            console.log('Parameters loaded:', this.parameters);
+            
             // Parse equations using math.js
             this.dxdt = math.parse(dxdtInput).compile();
             this.dydt = math.parse(dydtInput).compile();
             console.log('Equations parsed successfully');
+            
+            // Update parameter display
+            this.updateParameterDisplay();
         } catch (error) {
-            console.error('Error parsing equations:', error);
-            alert('Error parsing equations. Please check your syntax.\nError: ' + error.message);
+            console.error('Error parsing system:', error);
+            if (error instanceof SyntaxError) {
+                alert('Error parsing parameters JSON. Please check your JSON syntax.\nError: ' + error.message);
+            } else {
+                alert('Error parsing equations. Please check your syntax.\nError: ' + error.message);
+            }
         }
     }
     
@@ -151,27 +169,80 @@ class DynamicalSystemVisualizer {
             'van-der-pol': {
                 dxdt: 'y',
                 dydt: 'mu * (1 - x^2) * y - x',
-                params: { mu: 1 }
+                parameters: { mu: 1 }
             },
             'pendulum': {
                 dxdt: 'y',
-                dydt: '-sin(x) - 0.1 * y'
+                dydt: '-sin(x) - gamma * y',
+                parameters: { gamma: 0.1 }
             },
             'lotka-volterra': {
-                dxdt: 'x * (1 - y)',
-                dydt: '-y * (1 - x)'
+                dxdt: 'alpha * x - beta * x * y',
+                dydt: 'delta * x * y - gamma * y',
+                parameters: { alpha: 1, beta: 1, delta: 1, gamma: 1 }
             },
             'spiral': {
-                dxdt: '-0.1 * x - y',
-                dydt: 'x - 0.1 * y'
+                dxdt: 'sigma * x - y',
+                dydt: 'x + sigma * y',
+                parameters: { sigma: -0.1 }
             }
         };
         
         if (presets[preset]) {
             document.getElementById('dx-dt').value = presets[preset].dxdt;
             document.getElementById('dy-dt').value = presets[preset].dydt;
+            
+            // Set parameters if available
+            if (presets[preset].parameters) {
+                document.getElementById('parameters').value = JSON.stringify(presets[preset].parameters, null, 2);
+            } else {
+                document.getElementById('parameters').value = '{}';
+            }
+            
             this.updateSystem();
             this.draw();
+        }
+    }
+    
+    validateParameters(parametersInput) {
+        const parametersField = document.getElementById('parameters');
+        const helpText = parametersField.parentNode.querySelector('.help-text');
+        
+        if (!parametersInput.trim()) {
+            // Empty is valid
+            parametersField.style.borderColor = '#e9ecef';
+            helpText.textContent = 'Define custom parameters as JSON object';
+            helpText.style.color = '#6c757d';
+            return;
+        }
+        
+        try {
+            const parsed = JSON.parse(parametersInput);
+            if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
+                parametersField.style.borderColor = '#28a745';
+                helpText.textContent = 'Valid JSON parameters';
+                helpText.style.color = '#28a745';
+            } else {
+                parametersField.style.borderColor = '#dc3545';
+                helpText.textContent = 'Parameters must be a JSON object';
+                helpText.style.color = '#dc3545';
+            }
+        } catch (error) {
+            parametersField.style.borderColor = '#dc3545';
+            helpText.textContent = 'Invalid JSON syntax';
+            helpText.style.color = '#dc3545';
+        }
+    }
+    
+    updateParameterDisplay() {
+        const display = document.getElementById('current-parameters');
+        if (Object.keys(this.parameters).length > 0) {
+            const paramStr = Object.entries(this.parameters)
+                .map(([key, value]) => `${key}=${value}`)
+                .join(', ');
+            display.textContent = `Parameters: ${paramStr}`;
+        } else {
+            display.textContent = '';
         }
     }
     
@@ -182,7 +253,8 @@ class DynamicalSystemVisualizer {
         }
         
         try {
-            const scope = { x: x, y: y, mu: 1 }; // Add common parameters
+            // Create scope with x, y and custom parameters
+            const scope = { x: x, y: y, ...this.parameters };
             const dx = this.dxdt.evaluate(scope);
             const dy = this.dydt.evaluate(scope);
             return { dx, dy };
