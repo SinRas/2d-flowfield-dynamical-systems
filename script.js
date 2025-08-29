@@ -87,6 +87,12 @@ class DynamicalSystemVisualizer {
         this.showGrid = true;
         this.showNullclines = false;
         
+        // Caching system
+        this.recalculateFlowField = true;
+        this.recalculateNullclines = true;
+        this.flowFieldCache = null;
+        this.nullclinesCache = null;
+        
         // Particle system
         this.particles = [];
         this.particleColors = [
@@ -107,6 +113,11 @@ class DynamicalSystemVisualizer {
         document.getElementById('equation-display').classList.add('hidden');
         this.draw();
     }
+
+    triggerRecalculateFlowFieldNullclines() {
+        this.recalculateFlowField = true;
+        this.recalculateNullclines = true;
+    }
     
     setupEventListeners() {
         // System update
@@ -120,6 +131,7 @@ class DynamicalSystemVisualizer {
         gridDensitySlider.addEventListener('input', (e) => {
             this.gridDensity = parseInt(e.target.value);
             document.getElementById('grid-density-value').textContent = this.gridDensity;
+            this.triggerRecalculateFlowFieldNullclines();
             this.draw();
         });
         
@@ -153,6 +165,7 @@ class DynamicalSystemVisualizer {
         ['x-min', 'x-max', 'y-min', 'y-max'].forEach(id => {
             document.getElementById(id).addEventListener('change', () => {
                 this.updateViewRange();
+                this.triggerRecalculateFlowFieldNullclines();
                 this.draw();
             });
         });
@@ -233,6 +246,9 @@ class DynamicalSystemVisualizer {
             
             // Clear particles when system changes
             this.resetAll();
+            
+            // Invalidate cache since system changed
+            this.triggerRecalculateFlowFieldNullclines();
         } catch (error) {
             console.error('Error parsing system:', error);
             if (error instanceof SyntaxError) {
@@ -263,6 +279,7 @@ class DynamicalSystemVisualizer {
         
         // Also reset particles when view changes
         this.resetAll();
+        this.triggerRecalculateFlowFieldNullclines();
         this.draw();
     }
     
@@ -642,6 +659,20 @@ class DynamicalSystemVisualizer {
     }
     
     drawFlowField() {
+        // Check if we can use cached flow field
+        if (!this.recalculateFlowField && this.flowFieldCache) {
+            this.drawCachedFlowField();
+            this.recalculateFlowField = false;
+            return;
+        }
+        
+        // Generate and cache new flow field
+        this.generateFlowFieldCache();
+        this.drawCachedFlowField();
+    }
+    
+    generateFlowFieldCache() {
+        this.flowFieldCache = [];
         this.ctx.strokeStyle = this.arrowColor;
         this.ctx.lineWidth = 1.5;
         
@@ -667,32 +698,73 @@ class DynamicalSystemVisualizer {
                     const endX = startX + normalizedDx;
                     const endY = startY - normalizedDy; // Flip Y for canvas coordinates
                     
-                    this.drawArrow(startX, startY, endX, endY);
+                    // Store arrow data in cache
+                    this.flowFieldCache.push({
+                        startX, startY, endX, endY
+                    });
                 }
             }
         }
+        
+        this.cacheValid = true;
+    }
+    
+    drawCachedFlowField() {
+        this.ctx.strokeStyle = this.arrowColor;
+        this.ctx.lineWidth = 1.5;
+        
+        // Draw all cached arrows
+        this.flowFieldCache.forEach(arrow => {
+            this.drawArrow(arrow.startX, arrow.startY, arrow.endX, arrow.endY);
+        });
     }
     
     drawNullclines() {
         if (!this.showNullclines) return;
+        // Check if we can use cached nullclines
+        if (!this.recalculateNullclines && this.nullclinesCache) {
+            this.drawCachedNullclines();
+            this.recalculateNullclines = false;
+            return;
+        }
         
-        this.ctx.lineWidth = 2;
-        
-        // dx/dt = 0 nullcline (red)
-        this.ctx.strokeStyle = '#e74c3c';
-        this.drawNullcline(true);
-        
-        // dy/dt = 0 nullcline (blue)
-        this.ctx.strokeStyle = '#3498db';
-        this.drawNullcline(false);
+        // Generate and cache new nullclines
+        this.generateNullclinesCache();
+        this.drawCachedNullclines();
     }
     
-    drawNullcline(isDxDt) {
+    generateNullclinesCache() {
+        this.nullclinesCache = {
+            dxdt: [],
+            dydt: []
+        };
+        
+        // Generate dx/dt = 0 nullcline
+        this.generateNullcline(true);
+        
+        // Generate dy/dt = 0 nullcline
+        this.generateNullcline(false);
+        
+        this.cacheValid = true;
+    }
+    
+    drawCachedNullclines() {
+        this.ctx.lineWidth = 2;
+        
+        // Draw dx/dt = 0 nullcline (red)
+        this.ctx.strokeStyle = '#e74c3c';
+        this.drawCachedNullcline(this.nullclinesCache.dxdt);
+        
+        // Draw dy/dt = 0 nullcline (blue)
+        this.ctx.strokeStyle = '#3498db';
+        this.drawCachedNullcline(this.nullclinesCache.dydt);
+    }
+    
+    generateNullcline(isDxDt) {
         const resolution = 200;
         const stepX = (this.xMax - this.xMin) / resolution;
-        
-        this.ctx.beginPath();
-        let pathStarted = false;
+        const cacheKey = isDxDt ? 'dxdt' : 'dydt';
+        const points = [];
         
         for (let i = 0; i <= resolution; i++) {
             const x = this.xMin + i * stepX;
@@ -705,16 +777,24 @@ class DynamicalSystemVisualizer {
                 if (Math.abs(value) < 0.05) { // Threshold for "zero"
                     const canvasX = this.worldToCanvasX(x);
                     const canvasY = this.worldToCanvasY(y);
-                    
-                    if (!pathStarted) {
-                        this.ctx.moveTo(canvasX, canvasY);
-                        pathStarted = true;
-                    } else {
-                        this.ctx.lineTo(canvasX, canvasY);
-                    }
+                    points.push({x: canvasX, y: canvasY});
                     break;
                 }
             }
+        }
+        
+        // Store points in cache
+        this.nullclinesCache[cacheKey] = points;
+    }
+    
+    drawCachedNullcline(points) {
+        if (points.length < 2) return;
+        
+        this.ctx.beginPath();
+        this.ctx.moveTo(points[0].x, points[0].y);
+        
+        for (let i = 1; i < points.length; i++) {
+            this.ctx.lineTo(points[i].x, points[i].y);
         }
         
         this.ctx.stroke();
@@ -744,6 +824,8 @@ class DynamicalSystemVisualizer {
             });
         }
     }
+    
+
 }
 
 // Function to initialize when math.js is ready
@@ -785,3 +867,4 @@ if (document.readyState === 'loading') {
     // DOM is already ready
     initializeVisualizer();
 }
+
