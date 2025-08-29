@@ -27,6 +27,8 @@ class DynamicalSystemVisualizer {
         
         this.setupEventListeners();
         // Don't automatically parse equations - wait for user to click update
+        // Hide equation display initially
+        document.getElementById('equation-display').classList.add('hidden');
         this.draw();
     }
     
@@ -131,6 +133,9 @@ class DynamicalSystemVisualizer {
             
             // Update parameter display
             this.updateParameterDisplay();
+            
+            // Render equations as LaTeX
+            this.renderEquations();
         } catch (error) {
             console.error('Error parsing system:', error);
             if (error instanceof SyntaxError) {
@@ -243,6 +248,89 @@ class DynamicalSystemVisualizer {
             display.textContent = `Parameters: ${paramStr}`;
         } else {
             display.textContent = '';
+        }
+    }
+    
+    convertToLatex(expression) {
+        // Convert common mathematical expressions to LaTeX
+        let latex = expression;
+        
+        // Replace power notation (handle more complex cases)
+        latex = latex.replace(/\b([a-zA-Z]\w*|\([^)]+\))\s*\^\s*(\d+)/g, '$1^{$2}');
+        latex = latex.replace(/\b([a-zA-Z]\w*|\([^)]+\))\s*\^\s*(\([^)]+\))/g, '$1^{$2}');
+        latex = latex.replace(/\b([a-zA-Z]\w*|\([^)]+\))\s*\^\s*([a-zA-Z]\w*)/g, '$1^{$2}');
+        
+        // Handle specific cases like x^2, y^2
+        latex = latex.replace(/([xy])\s*\^\s*2/g, '$1^2');
+        
+        // Replace multiplication signs with \cdot, but be smart about it
+        latex = latex.replace(/\*\s*/g, ' \\cdot ');
+        
+        // Remove unnecessary \cdot before parentheses
+        latex = latex.replace(/\\cdot\s*\(/g, '(');
+        latex = latex.replace(/\)\s*\\cdot\s*/g, ')');
+        
+        // Replace common functions
+        latex = latex.replace(/\bsin\b/g, '\\sin');
+        latex = latex.replace(/\bcos\b/g, '\\cos');
+        latex = latex.replace(/\btan\b/g, '\\tan');
+        latex = latex.replace(/\bexp\b/g, '\\exp');
+        latex = latex.replace(/\blog\b/g, '\\log');
+        latex = latex.replace(/\bsqrt\b/g, '\\sqrt');
+        
+        // Replace Greek letters commonly used as parameters
+        latex = latex.replace(/\bmu\b/g, '\\mu');
+        latex = latex.replace(/\balpha\b/g, '\\alpha');
+        latex = latex.replace(/\bbeta\b/g, '\\beta');
+        latex = latex.replace(/\bgamma\b/g, '\\gamma');
+        latex = latex.replace(/\bdelta\b/g, '\\delta');
+        latex = latex.replace(/\bsigma\b/g, '\\sigma');
+        latex = latex.replace(/\bomega\b/g, '\\omega');
+        
+        // Replace pi and e
+        latex = latex.replace(/\bpi\b/g, '\\pi');
+        latex = latex.replace(/\be\b/g, 'e');
+        
+        // Handle parentheses for functions
+        latex = latex.replace(/(\\(?:sin|cos|tan|exp|log|sqrt))\s*\(/g, '$1(');
+        
+        // Clean up spaces around operators
+        latex = latex.replace(/\s*([+\-=])\s*/g, ' $1 ');
+        latex = latex.replace(/\s+/g, ' ').trim();
+        
+        return latex;
+    }
+    
+    renderEquations() {
+        const dxdtInput = document.getElementById('dx-dt').value;
+        const dydtInput = document.getElementById('dy-dt').value;
+        const equationDisplay = document.getElementById('equation-display');
+        const latexContainer = document.getElementById('latex-equations');
+        
+        if (!dxdtInput.trim() && !dydtInput.trim()) {
+            equationDisplay.classList.add('hidden');
+            return;
+        }
+        
+        equationDisplay.classList.remove('hidden');
+        
+        const dxdtLatex = this.convertToLatex(dxdtInput);
+        const dydtLatex = this.convertToLatex(dydtInput);
+        
+        const latexContent = `
+            \\begin{align}
+            \\frac{dx}{dt} &= ${dxdtLatex} \\\\
+            \\frac{dy}{dt} &= ${dydtLatex}
+            \\end{align}
+        `;
+        
+        latexContainer.innerHTML = `$$${latexContent}$$`;
+        
+        // Re-render MathJax
+        if (window.MathJax) {
+            MathJax.typesetPromise([latexContainer]).catch((err) => {
+                console.log('MathJax rendering error:', err);
+            });
         }
     }
     
