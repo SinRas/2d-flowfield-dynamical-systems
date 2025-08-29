@@ -232,7 +232,7 @@ class DynamicalSystemVisualizer {
             this.renderEquations();
             
             // Clear particles when system changes
-            this.clearParticles();
+            this.resetAll();
         } catch (error) {
             console.error('Error parsing system:', error);
             if (error instanceof SyntaxError) {
@@ -262,7 +262,7 @@ class DynamicalSystemVisualizer {
         document.getElementById('y-max').value = this.yMax;
         
         // Also reset particles when view changes
-        this.clearParticles();
+        this.resetAll();
         this.draw();
     }
     
@@ -469,8 +469,7 @@ class DynamicalSystemVisualizer {
     }
     
     clearParticles() {
-        this.particles = [];
-        this.colorIndex = 0;
+        this.particles.forEach(particle => particle.active = false);
         this.updateParticleCount();
         this.draw();
     }
@@ -490,7 +489,7 @@ class DynamicalSystemVisualizer {
     }
     
     updateParticleCount() {
-        document.getElementById('particle-count').textContent = `Particles: ${this.particles.length}`;
+        document.getElementById('particle-count').textContent = `Particles: ${this.particles.filter(p => p.active).length}`;
     }
     
     startSimulation() {
@@ -508,8 +507,7 @@ class DynamicalSystemVisualizer {
             particle.update(this.simulationSpeed, (x, y) => this.evaluateSystem(x, y));
         });
         
-        // Remove inactive particles
-        this.particles = this.particles.filter(particle => particle.active);
+        // Update particle count
         this.updateParticleCount();
         
         // Redraw
