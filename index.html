@@ -23,8 +23,8 @@
 <body>
     <div class="container">
         <header>
-            <h1>2D Dynamical System Visualizer</h1>
-            <p>Visualize flow fields of two-dimensional dynamical systems</p>
+            <!-- <h1>2D Dynamical System Visualizer</h1> -->
+            <!-- <p>Visualize flow fields of two-dimensional dynamical systems</p> -->
         </header>
 
         <div class="main-content">
@@ -115,7 +115,17 @@
 
             <!-- Visualization Panel -->
             <div class="visualization-panel">
-                <canvas id="flow-field-canvas" width="800" height="800"></canvas>
+                <div class="canvas-container">
+                    <canvas id="flow-field-canvas" width="800" height="800"></canvas>
+                    <div class="particle-controls">
+                        <button id="clear-particles" class="control-btn">Clear Particles</button>
+                        <button id="clear-trajectories" class="control-btn">Clear Trajectories</button>
+                        <button id="reset-all" class="control-btn">Reset All</button>
+                        <div class="particle-info">
+                            <span id="particle-count">Particles: 0</span>
+                        </div>
+                    </div>
+                </div>
                 <div id="equation-display" class="equation-display">
                     <div class="equation-title">System Equations</div>
                     <div id="latex-equations"></div>

@@ -1,3 +1,69 @@
+class Particle {
+    constructor(x, y, color) {
+        this.x = x;
+        this.y = y;
+        this.color = color;
+        this.trajectory = [{x: x, y: y}];
+        this.active = true;
+        this.id = Date.now() + Math.random(); // Unique ID for each particle
+    }
+    
+    update(dt, evaluator) {
+        if (!this.active) return;
+        
+        // Runge-Kutta 4th order integration
+        const k1 = evaluator(this.x, this.y);
+        const k2 = evaluator(this.x + k1.dx * dt / 2, this.y + k1.dy * dt / 2);
+        const k3 = evaluator(this.x + k2.dx * dt / 2, this.y + k2.dy * dt / 2);
+        const k4 = evaluator(this.x + k3.dx * dt, this.y + k3.dy * dt);
+        
+        const dx = (k1.dx + 2 * k2.dx + 2 * k3.dx + k4.dx) / 6;
+        const dy = (k1.dy + 2 * k2.dy + 2 * k3.dy + k4.dy) / 6;
+        
+        this.x += dx * dt;
+        this.y += dy * dt;
+        
+        // Add to trajectory
+        this.trajectory.push({x: this.x, y: this.y});
+        
+        // Check if particle is still in bounds
+        if (this.x < -10 || this.x > 10 || this.y < -10 || this.y > 10) {
+            this.active = false;
+        }
+    }
+    
+    draw(ctx, worldToCanvasX, worldToCanvasY) {
+        if (this.trajectory.length < 2) return;
+        
+        // Draw trajectory
+        ctx.strokeStyle = this.color;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        
+        const startX = worldToCanvasX(this.trajectory[0].x);
+        const startY = worldToCanvasY(this.trajectory[0].y);
+        ctx.moveTo(startX, startY);
+        
+        for (let i = 1; i < this.trajectory.length; i++) {
+            const x = worldToCanvasX(this.trajectory[i].x);
+            const y = worldToCanvasY(this.trajectory[i].y);
+            ctx.lineTo(x, y);
+        }
+        
+        ctx.stroke();
+        
+        // Draw current particle position
+        if (this.active) {
+            ctx.fillStyle = this.color;
+            ctx.beginPath();
+            const canvasX = worldToCanvasX(this.x);
+            const canvasY = worldToCanvasY(this.y);
+            ctx.arc(canvasX, canvasY, 4, 0, 2 * Math.PI);
+            ctx.fill();
+        }
+    }
+}
+
 class DynamicalSystemVisualizer {
     constructor() {
         this.canvas = document.getElementById('flow-field-canvas');
@@ -20,6 +86,16 @@ class DynamicalSystemVisualizer {
         this.arrowColor = '#3498db';
         this.showGrid = true;
         this.showNullclines = false;
+        
+        // Particle system
+        this.particles = [];
+        this.particleColors = [
+            '#e74c3c', '#3498db', '#2ecc71', '#f39c12', 
+            '#9b59b6', '#e67e22', '#1abc9c', '#34495e'
+        ];
+        this.colorIndex = 0;
+        this.simulationRunning = false;
+        this.simulationSpeed = 0.05; // Time step for integration
         
         // Canvas parameters
         this.canvasWidth = this.canvas.width;
@@ -96,6 +172,24 @@ class DynamicalSystemVisualizer {
             this.validateParameters(e.target.value);
         });
         
+        // Particle controls
+        document.getElementById('clear-particles').addEventListener('click', () => {
+            this.clearParticles();
+        });
+        
+        document.getElementById('clear-trajectories').addEventListener('click', () => {
+            this.clearTrajectories();
+        });
+        
+        document.getElementById('reset-all').addEventListener('click', () => {
+            this.resetAll();
+        });
+        
+        // Canvas click to add particles
+        this.canvas.addEventListener('click', (e) => {
+            this.addParticleAtClick(e);
+        });
+        
         // Mouse coordinates
         this.canvas.addEventListener('mousemove', (e) => {
             const rect = this.canvas.getBoundingClientRect();
@@ -136,6 +230,9 @@ class DynamicalSystemVisualizer {
             
             // Render equations as LaTeX
             this.renderEquations();
+            
+            // Clear particles when system changes
+            this.clearParticles();
         } catch (error) {
             console.error('Error parsing system:', error);
             if (error instanceof SyntaxError) {
@@ -154,16 +251,18 @@ class DynamicalSystemVisualizer {
     }
     
     resetView() {
-        this.xMin = -3;
-        this.xMax = 3;
-        this.yMin = -3;
-        this.yMax = 3;
+        this.xMin = -5;
+        this.xMax = 5;
+        this.yMin = -5;
+        this.yMax = 5;
         
         document.getElementById('x-min').value = this.xMin;
         document.getElementById('x-max').value = this.xMax;
         document.getElementById('y-min').value = this.yMin;
         document.getElementById('y-max').value = this.yMax;
         
+        // Also reset particles when view changes
+        this.clearParticles();
         this.draw();
     }
     
@@ -332,6 +431,109 @@ class DynamicalSystemVisualizer {
                 console.log('MathJax rendering error:', err);
             });
         }
+    }
+    
+    addParticleAtClick(event) {
+        if (!this.dxdt || !this.dydt) {
+            alert('Please load a system first by clicking "Update System"');
+            return;
+        }
+        
+        const rect = this.canvas.getBoundingClientRect();
+        const canvasX = event.clientX - rect.left;
+        const canvasY = event.clientY - rect.top;
+        const worldX = this.canvasToWorldX(canvasX);
+        const worldY = this.canvasToWorldY(canvasY);
+        
+        // Get next color
+        const color = this.particleColors[this.colorIndex % this.particleColors.length];
+        this.colorIndex++;
+        
+        // Create new particle
+        const particle = new Particle(worldX, worldY, color);
+        this.particles.push(particle);
+        
+        // Update particle count
+        this.updateParticleCount();
+        
+        // Start simulation if not running
+        if (!this.simulationRunning) {
+            this.startSimulation();
+        }
+        
+        // Show feedback
+        this.showClickFeedback(canvasX, canvasY, color);
+        
+        // Redraw
+        this.draw();
+    }
+    
+    clearParticles() {
+        this.particles = [];
+        this.colorIndex = 0;
+        this.updateParticleCount();
+        this.draw();
+    }
+    
+    clearTrajectories() {
+        this.particles.forEach(particle => {
+            particle.trajectory = [{x: particle.x, y: particle.y}];
+        });
+        this.draw();
+    }
+    
+    resetAll() {
+        this.particles = [];
+        this.colorIndex = 0;
+        this.updateParticleCount();
+        this.draw();
+    }
+    
+    updateParticleCount() {
+        document.getElementById('particle-count').textContent = `Particles: ${this.particles.length}`;
+    }
+    
+    startSimulation() {
+        if (this.simulationRunning) return;
+        
+        this.simulationRunning = true;
+        this.simulateStep();
+    }
+    
+    simulateStep() {
+        if (!this.simulationRunning) return;
+        
+        // Update all particles
+        this.particles.forEach(particle => {
+            particle.update(this.simulationSpeed, (x, y) => this.evaluateSystem(x, y));
+        });
+        
+        // Remove inactive particles
+        this.particles = this.particles.filter(particle => particle.active);
+        this.updateParticleCount();
+        
+        // Redraw
+        this.draw();
+        
+        // Continue simulation if there are active particles
+        if (this.particles.length > 0 && this.particles.some(p => p.active)) {
+            requestAnimationFrame(() => this.simulateStep());
+        } else {
+            this.simulationRunning = false;
+        }
+    }
+    
+    showClickFeedback(canvasX, canvasY, color) {
+        // Draw a small circle at click position
+        this.ctx.fillStyle = color;
+        this.ctx.beginPath();
+        this.ctx.arc(canvasX, canvasY, 8, 0, 2 * Math.PI);
+        this.ctx.fill();
+        
+        // Fade out effect
+        setTimeout(() => {
+            this.draw();
+        }, 200);
     }
     
     evaluateSystem(x, y) {
@@ -532,6 +734,11 @@ class DynamicalSystemVisualizer {
         } else {
             this.drawFlowField();
             this.drawNullclines();
+            
+            // Draw particles and trajectories
+            this.particles.forEach(particle => {
+                particle.draw(this.ctx, this.worldToCanvasX.bind(this), this.worldToCanvasY.bind(this));
+            });
         }
     }
 }
