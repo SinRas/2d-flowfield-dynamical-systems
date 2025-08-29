@@ -48,7 +48,7 @@ header p {
     padding: 25px;
     background: #f8f9fa;
     border-right: 1px solid #e9ecef;
-    max-height: 80vh;
+    max-height: 120vh;
     overflow-y: auto;
 }
 

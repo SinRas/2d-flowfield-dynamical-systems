@@ -289,6 +289,11 @@ class DynamicalSystemVisualizer {
                 dxdt: 'sigma * x - y',
                 dydt: 'x + sigma * y',
                 parameters: { sigma: -0.1 }
+            },
+            'fitzhugh-nagumo': {
+                dxdt: 'x - x^3 - y + delta',
+                dydt: 'gamma * x + gamma * alpha - gamma * beta * y',
+                parameters: { alpha: 0.7, beta: 0.8, gamma: 0.08, delta: 0.6 }
             }
         };
         
