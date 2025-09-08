@@ -32,6 +32,16 @@
             <div class="control-panel">
                 <div class="section">
                     <h3>System Equations</h3>
+                    <!-- Presets -->
+                    <select id="preset-select" style="margin-bottom: 10px;">
+                        <option value="">Select a preset...</option>
+                        <option value="van-der-pol">Van der Pol Oscillator</option>
+                        <option value="pendulum">Damped Pendulum</option>
+                        <option value="lotka-volterra">Lotka-Volterra</option>
+                        <option value="spiral">Spiral Sink</option>
+                        <option value="fitzhugh-nagumo">FitzHugh–Nagumo model</option>
+                    </select>
+                    <!-- Equations -->
                     <div class="equation-group">
                         <label for="dx-dt">dx/dt =</label>
                         <input type="text" id="dx-dt" placeholder="e.g., -y + x*(1 - x^2 - y^2)" value="-y + x*(1 - x^2 - y^2)">
@@ -40,7 +50,7 @@
                         <label for="dy-dt">dy/dt =</label>
                         <input type="text" id="dy-dt" placeholder="e.g., x + y*(1 - x^2 - y^2)" value="x + y*(1 - x^2 - y^2)">
                     </div>
-                    
+                    <!-- Parameters -->
                     <div class="equation-group">
                         <label for="parameters">Parameters (JSON):</label>
                         <textarea id="parameters" placeholder='{"mu": 1, "alpha": 0.5}' rows="3">{}</textarea>
@@ -100,22 +110,11 @@
 
                     <button id="reset-view">Reset View</button>
                 </div>
-
-                <div class="section">
-                    <h3>Presets</h3>
-                    <select id="preset-select">
-                        <option value="">Select a preset...</option>
-                        <option value="van-der-pol">Van der Pol Oscillator</option>
-                        <option value="pendulum">Damped Pendulum</option>
-                        <option value="lotka-volterra">Lotka-Volterra</option>
-                        <option value="spiral">Spiral Sink</option>
-                        <option value="fitzhugh-nagumo">FitzHugh–Nagumo model</option>
-                    </select>
-                </div>
             </div>
 
             <!-- Visualization Panel -->
             <div class="visualization-panel">
+                <!-- Canvas for flow field visualization -->
                 <div class="canvas-container">
                     <canvas id="flow-field-canvas" width="800" height="800"></canvas>
                     <div class="particle-controls">
@@ -127,10 +126,12 @@
                         </div>
                     </div>
                 </div>
+                <!-- Render the equations -->
                 <div id="equation-display" class="equation-display">
                     <div class="equation-title">System Equations</div>
                     <div id="latex-equations"></div>
                 </div>
+                <!-- Render the mouse coordinates -->
                 <div class="canvas-info">
                     <span id="mouse-coordinates">Move mouse over canvas to see coordinates</span>
                     <div id="current-parameters" style="margin-top: 10px; font-size: 12px; color: #666;"></div>
