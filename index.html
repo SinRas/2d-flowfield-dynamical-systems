@@ -6,7 +6,7 @@
     <title>2D Dynamical System Visualizer</title>
     <link rel="stylesheet" href="styles.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/14.6.0/math.min.js" integrity="sha512-nw07d3E1b2VJ8z/JI92aD68bVsX0K8XSSUB/IDUvAEvOlC75mJe3+IGg+zAnllwGku1hSHUVLqgtb+CUp7NeyQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@6.0.0/dist/echarts.min.js" integrity="sha256-uqjf5+HZM2uY6Jhrp+IOoV582+oe9CpZ1ZR4Yy+kWh0=" crossorigin="anonymous"></script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script>
         window.MathJax = {
@@ -125,7 +125,12 @@
                             <span id="particle-count">Particles: 0</span>
                         </div>
                     </div>
+                    
                 </div>
+
+                <!-- Render the chart -->
+                <div id="echarts-container" style="width: 800px; height: 400px;"></div>
+                
                 <!-- Render the equations -->
                 <div id="equation-display" class="equation-display">
                     <div class="equation-title">System Equations</div>

@@ -1,9 +1,10 @@
 class Particle {
-    constructor(x, y, color) {
+    constructor(x, y, color, colorPaired) {
         this.x = x;
         this.y = y;
         this.color = color;
-        this.trajectory = [{x: x, y: y}];
+        this.colorPaired = colorPaired;
+        this.trajectory = [{x: x, y: y, t: 0.0}];
         this.active = true;
         this.id = Date.now() + Math.random(); // Unique ID for each particle
     }
@@ -24,7 +25,7 @@ class Particle {
         this.y += dy * dt;
         
         // Add to trajectory
-        this.trajectory.push({x: this.x, y: this.y});
+        this.trajectory.push({x: this.x, y: this.y, t: this.trajectory.length * dt});
         
         // Check if particle is still in bounds
         if (this.x < -10 || this.x > 10 || this.y < -10 || this.y > 10) {
@@ -66,8 +67,27 @@ class Particle {
 
 class DynamicalSystemVisualizer {
     constructor() {
+        // Flow field canvas
         this.canvas = document.getElementById('flow-field-canvas');
         this.ctx = this.canvas.getContext('2d');
+
+        // ECharts container
+        this.echartsContainer = document.getElementById('echarts-container');
+        this.echarts = echarts.init(this.echartsContainer);
+        this.echartsSeries = [];
+        this.echartsOption = {
+            animation: false,
+            xAxis: {
+                type: 'value',
+                name: 'Time'
+            },
+            yAxis: {
+                type: 'value',
+                name: 'Value'
+            },
+            series: this.echartsSeries
+        };
+        this.echartsOption && this.echarts.setOption(this.echartsOption);
         
         // System equations
         this.dxdt = null;
@@ -98,6 +118,14 @@ class DynamicalSystemVisualizer {
         this.particleColors = [
             '#e74c3c', '#3498db', '#2ecc71', '#f39c12', 
             '#9b59b6', '#e67e22', '#1abc9c', '#34495e'
+        ];
+        // this.particleColorsPaired = [
+        //     '#f9d5d2', '#aed6f1', '#a9dfbf', '#fcf3cf',
+        //     '#d7bde2', '#f5cba7', '#a3e4d7', '#aeb6bf'
+        // ];
+        this.particleColorsPaired = [
+            '#48c9b0', '#f1c40f', '#d91e63', '#4e54c8',
+            '#cddc39', '#00a8ff', '#ff7f50', '#b2ff59'
         ];
         this.colorIndex = 0;
         this.simulationRunning = false;
@@ -469,10 +497,11 @@ class DynamicalSystemVisualizer {
         
         // Get next color
         const color = this.particleColors[this.colorIndex % this.particleColors.length];
+        const colorPaired = this.particleColorsPaired[this.colorIndex % this.particleColorsPaired.length];
         this.colorIndex++;
         
         // Create new particle
-        const particle = new Particle(worldX, worldY, color);
+        const particle = new Particle(worldX, worldY, color, colorPaired);
         this.particles.push(particle);
         
         // Update particle count
@@ -806,6 +835,9 @@ class DynamicalSystemVisualizer {
         
         // Draw components
         this.drawGrid();
+
+        // Initialize series
+        this.echartsSeries = [];
         
         // Show message if no equations loaded
         if (!this.dxdt || !this.dydt) {
@@ -822,6 +854,31 @@ class DynamicalSystemVisualizer {
             this.particles.forEach(particle => {
                 particle.draw(this.ctx, this.worldToCanvasX.bind(this), this.worldToCanvasY.bind(this));
             });
+
+            // Draw all particles on the echarts
+            
+            this.particles.forEach(particle => {
+                this.echartsSeries.push({
+                    name: 'x',
+                    showSymbol: false,
+                    data: particle.trajectory.map(point => [point.t, point.x] ),
+                    color: particle.color,
+                    type: 'line'
+                });
+                this.echartsSeries.push({
+                    name: 'y',
+                    showSymbol: false,
+                    data: particle.trajectory.map(point => [point.t, point.y] ),
+                    color: particle.colorPaired,
+                    type: 'line'
+                });
+            });
+        }
+        this.echartsOption.series = this.echartsSeries;
+        if (this.echartsOption.series.length > 0) {
+            this.echarts.setOption(this.echartsOption, {lazyUpdate: true});
+        } else {
+            this.echarts.setOption({ series: [] }, {replaceMerge: ['series'],lazyUpdate: false});
         }
     }
     
