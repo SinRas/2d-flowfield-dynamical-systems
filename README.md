@@ -15,6 +15,11 @@ A comprehensive web-based tool for visualizing flow fields of two-dimensional dy
 - **Nullclines**: Optional visualization of dx/dt = 0 and dy/dt = 0 curves
 - **Mouse Coordinates**: Real-time coordinate display when hovering over the canvas
 - **Advanced Integration**: Uses Runge-Kutta 4th order method for accurate particle simulation
+- **Time Series Charts**: Interactive ECharts visualization showing particle trajectories over time
+- **Parameter Validation**: Real-time JSON parameter validation with visual feedback
+- **Performance Optimization**: Caching system for flow fields and nullclines
+- **Responsive Design**: Works on desktop and mobile devices
+- **Click Feedback**: Visual feedback when adding particles to the canvas
 
 ## Usage
 
@@ -79,6 +84,17 @@ The visualizer includes an interactive particle system for exploring system beha
 - **Integration Method**: Uses Runge-Kutta 4th order method for accurate numerical integration
 - **Automatic Simulation**: Particles automatically start moving when added
 
+### Time Series Visualization
+
+The visualizer includes an interactive time series chart below the main canvas:
+
+- **Real-time Plotting**: Shows x and y coordinates of particles over time
+- **Dual Series**: Each particle displays both x(t) and y(t) trajectories
+- **Color Coordination**: Chart colors match the particle colors on the canvas
+- **Interactive Charts**: Powered by ECharts for smooth, interactive visualization
+- **Automatic Updates**: Charts update in real-time as particles move
+- **Multiple Particles**: Supports visualization of multiple particle trajectories simultaneously
+
 ### Example Systems
 
 **Van der Pol Oscillator:**
@@ -142,6 +158,7 @@ The visualizer includes an interactive particle system for exploring system beha
 - **Frontend**: Vanilla JavaScript and HTML5 Canvas
 - **Mathematical Engine**: [math.js](https://mathjs.org/) library for expression parsing and evaluation
 - **Mathematical Rendering**: [MathJax](https://www.mathjax.org/) for LaTeX equation display
+- **Chart Visualization**: [ECharts](https://echarts.apache.org/) for interactive time series charts
 - **Styling**: Pure CSS with responsive design
 
 ### Performance Features
@@ -181,6 +198,7 @@ The visualizer includes an interactive particle system for exploring system beha
 The project uses the following external libraries (loaded via CDN):
 - **math.js v14.6.0**: Mathematical expression parsing and evaluation
 - **MathJax v3**: LaTeX equation rendering
+- **ECharts v6.0.0**: Interactive chart visualization for time series
 - **Polyfill.io**: ES6 feature support for older browsers
 
 ## Browser Support
