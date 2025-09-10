@@ -21,6 +21,32 @@ header {
     text-align: center;
     margin-bottom: 30px;
     color: white;
+    position: relative;
+}
+
+.github-link {
+    position: absolute;
+    top: 0;
+    right: 0;
+    font-size: 12px;
+    opacity: 0.8;
+}
+
+.github-link a {
+    color: white;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.github-link a:hover {
+    background: rgba(255, 255, 255, 0.2);
+    opacity: 1;
+    transform: translateY(-1px);
 }
 
 header h1 {

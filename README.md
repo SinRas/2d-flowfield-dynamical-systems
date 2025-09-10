@@ -2,6 +2,8 @@
 
 A comprehensive web-based tool for visualizing flow fields of two-dimensional dynamical systems. Enter your system equations and see the vector field visualization in real-time, complete with particle trajectories, nullclines, and mathematical equation rendering.
 
+🌐 **[Live Demo](https://sinras.github.io/2d-flowfield-dynamical-systems/)** - Try it out in your browser!
+
 ## Features
 
 - **Interactive Equation Input**: Enter dx/dt and dy/dt equations using mathematical expressions
