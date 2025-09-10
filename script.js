@@ -28,7 +28,7 @@ class Particle {
         this.trajectory.push({x: this.x, y: this.y, t: this.trajectory.length * dt});
         
         // Check if particle is still in bounds
-        if (this.x < -10 || this.x > 10 || this.y < -10 || this.y > 10) {
+        if (this.x < this.simulationXMin || this.x > this.simulationXMax || this.y < this.simulationYMin || this.y > this.simulationYMax) {
             this.active = false;
         }
     }
@@ -288,10 +288,17 @@ class DynamicalSystemVisualizer {
     }
     
     updateViewRange() {
+        // Get the values from the input fields
         this.xMin = parseFloat(document.getElementById('x-min').value);
         this.xMax = parseFloat(document.getElementById('x-max').value);
         this.yMin = parseFloat(document.getElementById('y-min').value);
         this.yMax = parseFloat(document.getElementById('y-max').value);
+
+        // Set simulation range to 3x the view range
+        this.simulationXMin = 2*this.xMin - this.xMax;
+        this.simulationXMax = 2*this.xMax - this.xMin;
+        this.simulationYMin = 2*this.yMin - this.yMax;
+        this.simulationYMax = 2*this.yMax - this.yMin;
     }
     
     resetView() {
@@ -299,6 +306,12 @@ class DynamicalSystemVisualizer {
         this.xMax = 5;
         this.yMin = -5;
         this.yMax = 5;
+
+        // Set simulation range to 3x the view range
+        this.simulationXMin = 2*this.xMin - this.xMax;
+        this.simulationXMax = 2*this.xMax - this.xMin;
+        this.simulationYMin = 2*this.yMin - this.yMax;
+        this.simulationYMax = 2*this.yMax - this.yMin;
         
         document.getElementById('x-min').value = this.xMin;
         document.getElementById('x-max').value = this.xMax;
